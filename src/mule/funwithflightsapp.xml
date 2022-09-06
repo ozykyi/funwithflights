@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6cce29a4-d348-4b43-9af4-b3599cd9ae64" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="2d5ec3bd-0ff4-43d5-85a1-1f0f0bb8995e" >
+		<http:request-connection host="fun-with-flights-oleg.s3.amazonaws.com"/>
+	</http:request-config>
+	<flow name="funwithflightsappFlow" doc:id="ca9d2e98-6c24-4906-b891-fd56fb5f009e" >
+		<http:listener doc:name="Listener" doc:id="784ae7b6-3a63-4f3d-914e-9c85db20b493" config-ref="HTTP_Listener_config" path="/routes" allowedMethods="GET"/>
+		<set-variable value="#[attributes.queryParams.source]" doc:name="Source Airport" doc:id="d8cfa889-ca56-455f-b00f-f97790fa816f" variableName="source"/>
+		<set-variable value="#[attributes.queryParams.dest]" doc:name="Destination Airport" doc:id="7b3cefc9-47fb-47cb-b6b2-a33e2f2c608e" variableName="dest"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="aaf696f6-ab06-482e-aa5f-53217d7966d0">
+			<route >
+				<http:request method="GET" doc:name="Get Flights Provider 1" doc:id="159f49a5-d975-40c7-bf59-a56d6bbc6797" config-ref="HTTP_Request_configuration" path="/flights1"/>
+			</route>
+			<route >
+				<http:request method="GET" doc:name="Get Flights Provider 2" doc:id="2aac8dc7-66bc-4e2f-b334-a82cd415e72a" config-ref="HTTP_Request_configuration" path="/flights2" />
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="78b00c81-d213-4a3c-b6be-91d6726e9ed7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var result = flatten(payload..payload)
+var sourceAirport = trim(vars.source) 
+var destinationAirport = trim(vars.dest)
+var isSourceSet = !isEmpty(sourceAirport)
+var isDestinationSet = !isEmpty(destinationAirport)
+---
+
+if(isSourceSet and isDestinationSet)
+	result filter ( $.sourceAirport == sourceAirport 
+		and $.destinationAirport == destinationAirport) 
+	
+else if(isSourceSet)
+	result filter ($.sourceAirport == sourceAirport) 
+
+else if(isDestinationSet)
+	result filter ($.destinationAirport == destinationAirport)
+else
+	result	 
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
