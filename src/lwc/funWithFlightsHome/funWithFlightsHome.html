@@ -1,0 +1,96 @@
+<!--
+ - Created by oleg_zykyi on 9/4/22.
+ -->
+
+<!-- Fun With Flights Home -->
+<template>
+
+    <lightning-spinner if:true={isLoading} size="medium"></lightning-spinner>
+
+    <lightning-layout multiple-rows="true" class="slds-align_absolute-center">
+
+        <lightning-card class="c-search-container">
+
+            <lightning-layout class="slds-p-around_large">
+
+                <lightning-layout-item class="slds-p-around_x-small" size="5">
+
+                    <c-lookup errors={fromErrors}
+                              onsearch={handleLookupSearch}
+                              onselectionchange={handleLookupSelectionChange}
+                              label="From"
+                              placeholder="Source Airport"
+                              class="c-from-lookup">
+                    </c-lookup>
+
+                </lightning-layout-item>
+                <lightning-layout-item class="slds-p-top_xx-large" size="2">
+                    <lightning-layout multiple-rows="true">
+
+                        <lightning-layout-item size="12">
+                            <lightning-button class="slds-align_absolute-center"
+                                              label="Search"
+                                              variant="brand"
+                                              onclick={search}>
+                            </lightning-button>
+                        </lightning-layout-item>
+
+                    </lightning-layout>
+                </lightning-layout-item>
+                <lightning-layout-item class="slds-p-around_x-small" size="5">
+
+                    <c-lookup errors={toErrors}
+                              onsearch={handleLookupSearch}
+                              onselectionchange={handleLookupSelectionChange}
+                              label="To"
+                              placeholder="Destination Airport"
+                              class="c-to-lookup">
+                    </c-lookup>
+
+                </lightning-layout-item>
+
+            </lightning-layout>
+
+        </lightning-card>
+
+        <lightning-layout-item size="12" if:true={displayNotFoundMessage}>
+
+            <div class="slds-p-around_large slds-text-heading_medium slds-align_absolute-center">
+                No flights found.
+            </div>
+
+        </lightning-layout-item>
+
+        <lightning-layout-item size="12" if:true={flightsFound}>
+
+            <div class="slds-p-around_medium lgc-bg slds-align_absolute-center">
+                <ul class="slds-has-dividers_bottom-space">
+                    <template for:each={flights} for:item="flight">
+
+                        <li class="slds-item" key={flight.destinationAirport}>
+
+                            <lightning-tile class="slds-p-left_large" label="Flight" href="#">
+
+                                <lightning-avatar src="/bad/image/url.jpg" slot="media"
+                                                  alternative-text="airplane"
+                                                  fallback-icon-name="custom:custom20"></lightning-avatar>
+                                <ul class="slds-list_horizontal slds-has-dividers_right">
+
+                                    <li class="slds-item">Airline: {flight.airline}</li>
+                                    <li class="slds-item">Source Airport: {flight.sourceAirport}</li>
+                                    <li class="slds-item">Destination Airport: {flight.destinationAirport}</li>
+                                    <li class="slds-item">Equipment: {flight.equipment}</li>
+
+                                </ul>
+                            </lightning-tile>
+                        </li>
+
+                    </template>
+                </ul>
+            </div>
+
+        </lightning-layout-item>
+
+    </lightning-layout>
+
+</template>
